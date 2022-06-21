@@ -3,8 +3,7 @@ Bundle-SymbolicName: com.liferay.portal.security.sso.cas.impl
 Bundle-Version: 4.0.11
 Import-Package:\
 	!javax.microedition.*,\
-	\
 	!junit.*,\
-	\
+	!org.slf4j.impl,\
 	*
 -fixupmessages: Classes found in the wrong directory: ...;is:=ignore
