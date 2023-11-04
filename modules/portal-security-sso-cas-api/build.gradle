@@ -1,3 +1,19 @@
+plugins {
+	id 'maven-publish'
+}
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			groupId = 'com.liferay'
+			artifactId = 'com.liferay.portal.security.sso.cas.api'
+			version = '5.0.12'
+
+			from components.java
+		}
+	}
+}
+
 dependencies {
 	compileOnly group: "com.liferay.portal", name: "release.portal.api"
 	compileOnly group: "com.liferay", name: "biz.aQute.bnd.annotation", version: "4.2.0.LIFERAY-PATCHED-2"
