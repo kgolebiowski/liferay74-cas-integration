@@ -1,15 +1,10 @@
 // Check GETTING_STARTED.markdown for information regarding usage.
 
-gradle.taskGraph.whenReady { graph ->
-    // Disabling docker tasks as they cause errors
-    //  after upgrading Gradle 7 (we don't use docker here anyway)
+// Disabling docker tasks as they cause errors
+//  after upgrading Gradle 7 (we don't use docker here anyway)
 
-    if (graph.hasTask(":stopDockerContainer"))
-        tasks.findByName("stopDockerContainer").enabled(false)
-
-    if (graph.hasTask(":removeDockerContainer"))
-        tasks.findByName("removeDockerContainer").enabled(false)
-
-    if (graph.hasTask(":cleanDockerImage"))
-        tasks.findByName("cleanDockerImage").enabled(false)
+tasks.matching { task ->
+    task.name in ['stopDockerContainer', 'removeDockerContainer', 'cleanDockerImage']
+}.configureEach {
+    enabled = false
 }
