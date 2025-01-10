@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
+ * <p>
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation; either version 2.1 of the License, or (at your option)
  * any later version.
- *
+ * <p>
  * This library is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
@@ -25,14 +25,12 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auto.login.AutoLogin;
 import com.liferay.portal.kernel.security.auto.login.BaseAutoLogin;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.ldap.exportimport.LDAPUserImporter;
 import com.liferay.portal.security.sso.cas.configuration.CASConfiguration;
-import com.liferay.portal.security.sso.cas.constants.CASConstants;
 import com.liferay.portal.security.sso.cas.internal.constants.CASWebKeys;
 import com.liferay.portal.util.PropsValues;
 import org.osgi.service.component.annotations.Component;
@@ -64,142 +62,137 @@ import javax.servlet.http.HttpSession;
  * @author Daeyoung Song
  */
 @Component(
-	configurationPid = "com.liferay.portal.security.sso.cas.configuration.CASConfiguration",
-	immediate = true, service = AutoLogin.class
+        configurationPid = "com.liferay.portal.security.sso.cas.configuration.CASConfiguration",
+        immediate = true, service = AutoLogin.class
 )
 public class CASAutoLogin extends BaseAutoLogin {
 
-	@Override
-	protected String[] doHandleException(
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse, Exception exception) {
+    @Override
+    protected String[] doHandleException(
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse, Exception exception) {
 
-		if (exception instanceof NoSuchUserException) {
-			HttpSession httpSession = httpServletRequest.getSession();
+        if (exception instanceof NoSuchUserException) {
+            HttpSession httpSession = httpServletRequest.getSession();
 
-			httpSession.removeAttribute(CASWebKeys.CAS_LOGIN);
+            httpSession.removeAttribute(CASWebKeys.CAS_LOGIN);
 
-			httpSession.setAttribute(
-				CASWebKeys.CAS_NO_SUCH_USER_EXCEPTION, Boolean.TRUE);
-		}
+            httpSession.setAttribute(
+                    CASWebKeys.CAS_NO_SUCH_USER_EXCEPTION, Boolean.TRUE);
+        }
 
-		_log.error(exception);
+        _log.error(exception);
 
-		return null;
-	}
+        return null;
+    }
 
-	@Override
-	protected String[] doLogin(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws Exception {
+    @Override
+    protected String[] doLogin(
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse)
+            throws Exception {
 
-		long companyId = _portal.getCompanyId(httpServletRequest);
+        long companyId = _portal.getCompanyId(httpServletRequest);
 
-		CASConfiguration casConfiguration =
-			_configurationProvider.getConfiguration(
-				CASConfiguration.class,
-				new CompanyServiceSettingsLocator(
-					companyId, CASConstants.SERVICE_NAME));
+        CASConfiguration casConfiguration =
+                _configurationProvider.getCompanyConfiguration(
+                        CASConfiguration.class, companyId);
 
-		if (!casConfiguration.enabled()) {
-			return null;
-		}
+        if (!casConfiguration.enabled()) {
+            return null;
+        }
 
-		HttpSession httpSession = httpServletRequest.getSession();
+        HttpSession httpSession = httpServletRequest.getSession();
 
-		String login = (String)httpSession.getAttribute(CASWebKeys.CAS_LOGIN);
+        String login = (String) httpSession.getAttribute(CASWebKeys.CAS_LOGIN);
 
-		if (Validator.isNull(login)) {
-			Object noSuchUserException = httpSession.getAttribute(
-				CASWebKeys.CAS_NO_SUCH_USER_EXCEPTION);
+        if (Validator.isNull(login)) {
+            Object noSuchUserException = httpSession.getAttribute(
+                    CASWebKeys.CAS_NO_SUCH_USER_EXCEPTION);
 
-			if (noSuchUserException == null) {
-				return null;
-			}
+            if (noSuchUserException == null) {
+                return null;
+            }
 
-			httpSession.removeAttribute(CASWebKeys.CAS_NO_SUCH_USER_EXCEPTION);
+            httpSession.removeAttribute(CASWebKeys.CAS_NO_SUCH_USER_EXCEPTION);
 
-			httpSession.setAttribute(CASWebKeys.CAS_FORCE_LOGOUT, Boolean.TRUE);
+            httpSession.setAttribute(CASWebKeys.CAS_FORCE_LOGOUT, Boolean.TRUE);
 
-			String redirect = casConfiguration.noSuchUserRedirectURL();
+            String redirect = casConfiguration.noSuchUserRedirectURL();
 
-			httpServletRequest.setAttribute(
-				AutoLogin.AUTO_LOGIN_REDIRECT, redirect);
+            httpServletRequest.setAttribute(
+                    AutoLogin.AUTO_LOGIN_REDIRECT, redirect);
 
-			return null;
-		}
+            return null;
+        }
 
-		User user = null;
+        User user = null;
 
-		String authType = PrefsPropsUtil.getString(
-			companyId, PropsKeys.COMPANY_SECURITY_AUTH_TYPE,
-			PropsValues.COMPANY_SECURITY_AUTH_TYPE);
+        String authType = PrefsPropsUtil.getString(
+                companyId, PropsKeys.COMPANY_SECURITY_AUTH_TYPE,
+                PropsValues.COMPANY_SECURITY_AUTH_TYPE);
 
-		if (casConfiguration.importFromLDAP()) {
-			try {
-				if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
-					user = _userImporter.importUser(
-						companyId, StringPool.BLANK, login);
-				}
-				else {
-					user = _userImporter.importUser(
-						companyId, login, StringPool.BLANK);
-				}
-			}
-			catch (SystemException systemException) {
+        if (casConfiguration.importFromLDAP()) {
+            try {
+                if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
+                    user = _userImporter.importUser(
+                            companyId, StringPool.BLANK, login);
+                } else {
+                    user = _userImporter.importUser(
+                            companyId, login, StringPool.BLANK);
+                }
+            } catch (SystemException systemException) {
 
-				// LPS-52675
+                // LPS-52675
 
-				if (_log.isDebugEnabled()) {
-					_log.debug(systemException);
-				}
-			}
-		}
+                if (_log.isDebugEnabled()) {
+                    _log.debug(systemException);
+                }
+            }
+        }
 
-		if (user == null) {
-			if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
-				user = _userLocalService.getUserByScreenName(companyId, login);
-			}
-			else {
-				user = _userLocalService.getUserByEmailAddress(
-					companyId, login);
-			}
-		}
+        if (user == null) {
+            if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
+                user = _userLocalService.getUserByScreenName(companyId, login);
+            } else {
+                user = _userLocalService.getUserByEmailAddress(
+                        companyId, login);
+            }
+        }
 
-		addRedirect(httpServletRequest);
+        addRedirect(httpServletRequest);
 
-		String[] credentials = new String[3];
+        String[] credentials = new String[3];
 
-		credentials[0] = String.valueOf(user.getUserId());
-		credentials[1] = user.getPassword();
-		credentials[2] = Boolean.TRUE.toString();
+        credentials[0] = String.valueOf(user.getUserId());
+        credentials[1] = user.getPassword();
+        credentials[2] = Boolean.TRUE.toString();
 
-		return credentials;
-	}
+        return credentials;
+    }
 
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
+    @Reference(unbind = "-")
+    protected void setConfigurationProvider(
+            ConfigurationProvider configurationProvider) {
 
-		_configurationProvider = configurationProvider;
-	}
+        _configurationProvider = configurationProvider;
+    }
 
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
-	}
+    @Reference(unbind = "-")
+    protected void setUserLocalService(UserLocalService userLocalService) {
+        _userLocalService = userLocalService;
+    }
 
-	private static final Log _log = LogFactoryUtil.getLog(CASAutoLogin.class);
+    private static final Log _log = LogFactoryUtil.getLog(CASAutoLogin.class);
 
-	private ConfigurationProvider _configurationProvider;
+    private ConfigurationProvider _configurationProvider;
 
-	@Reference
-	private Portal _portal;
+    @Reference
+    private Portal _portal;
 
-	@Reference
-	private LDAPUserImporter _userImporter;
+    @Reference
+    private LDAPUserImporter _userImporter;
 
-	private UserLocalService _userLocalService;
+    private UserLocalService _userLocalService;
 
 }
